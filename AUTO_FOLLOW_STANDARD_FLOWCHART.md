@@ -125,3 +125,74 @@ flowchart LR
 ## 5. ประโยคสรุปสำหรับใส่รายงาน
 
 > ระบบรถตัดหญ้านี้เป็นระบบควบคุมอัตโนมัติแบบแบ่งโหมดการทำงาน โดยโหมด AUTO ใช้การนำทางตาม waypoint และโหมด FOLLOW ME ใช้การตรวจจับบุคคลด้วยกล้องร่วมกับ LiDAR เพื่อกำหนดทิศทางและระยะห่าง การควบคุมเป็นแบบ closed-loop โดยรับข้อมูล feedback จาก GPS, IMU, encoder, LiDAR และกล้อง แล้วคำนวณคำสั่ง PWM สำหรับมอเตอร์อย่างต่อเนื่อง พร้อมมี decision logic สำหรับตรวจสอบความพร้อมและความปลอดภัยของระบบ
+
+## 6. เทคโนโลยีที่ใช้ในระบบ
+
+ส่วนนี้ควรแยกจาก Flowchart หลัก เพราะมีหน้าที่อธิบาย **เครื่องมือและเทคโนโลยีที่ใช้ประมวลผล** ไม่ใช่ลำดับการตัดสินใจของระบบ
+
+| ส่วนระบบ | เทคโนโลยี/อุปกรณ์ | หน้าที่ |
+|---|---|---|
+| Middleware | ROS 2 Foxy | เชื่อม node, topic และข้อมูล sensor |
+| Web control | Flask, HTML/JavaScript, roslibjs, rosbridge | หน้าเว็บ, แผนที่, ปุ่มสั่งงาน และสื่อสารกับ ROS |
+| AUTO localization | GPS และ Pixhawk ผ่าน MAVLink | ตำแหน่งและทิศทางของรถ |
+| AUTO control | Python, PID, waypoint/path control | คำนวณ heading, cross-track และ PWM |
+| Obstacle safety | RPLIDAR และ `sensor_msgs/LaserScan` | ตรวจสิ่งกีดขวางและระยะด้านหน้า |
+| FOLLOW detection | OpenCV, YOLO หรือ MediaPipe | รับภาพและตรวจจับบุคคล |
+| FOLLOW identification | OSNet ReID, MobileNet และ color matching | ยืนยันว่าเป็น owner ที่เลือกไว้ |
+| FOLLOW distance | กล้องร่วมกับ LiDAR | ประเมินทิศทางและระยะห่างจาก owner |
+| Motor interface | Arduino, Serial และ PWM | รับคำสั่งล้อและควบคุมมอเตอร์ |
+| Motion feedback | Encoder และ `/odom` | ตรวจการเคลื่อนที่จริงและช่วยปรับการควบคุม |
+
+## 7. Technology Architecture
+
+```mermaid
+flowchart LR
+    subgraph UI[User Interface Layer]
+        Browser[Web Browser]
+        Flask[Flask Web Server]
+        Bridge[rosbridge + roslibjs]
+        Browser --> Flask
+        Browser --> Bridge
+    end
+
+    subgraph ROS[ROS 2 Foxy Layer]
+        Main[lawnmower_node<br/>Python + PID]
+        Follow[follow_tracker_node<br/>OpenCV + YOLO/MediaPipe + ReID]
+        LidarNode[rplidar_node]
+        Odom[odom_yaw_node<br/>optional]
+        Bridge --> Main
+        Bridge --> Follow
+        LidarNode -->|/scan| Main
+        LidarNode -->|/scan| Follow
+        Odom -->|/odom| Follow
+        Follow -->|/follow_cmd| Main
+    end
+
+    subgraph HW[Hardware Layer]
+        Camera[Camera]
+        Pixhawk[Pixhawk<br/>GPS + IMU/MAVLink]
+        Rplidar[RPLIDAR]
+        Arduino[Arduino<br/>Serial + PWM]
+        Motors[Motor Driver + Wheels]
+    end
+
+    Camera --> Follow
+    Pixhawk -->|MAVLink| Main
+    Rplidar --> LidarNode
+    Main -->|PWM over Serial| Arduino
+    Arduino --> Motors
+    Arduino -->|mode + encoder + status| Main
+    Main -->|status topics| Bridge
+    Follow -->|vision status/debug| Bridge
+```
+
+## 8. แนวทางจัดวางในรายงาน
+
+เพื่อให้รายงานอ่านง่าย แนะนำแบ่งเป็น 3 รูป:
+
+1. **System Flowchart**: ใช้ตอบว่า ระบบทำงานตามลำดับอย่างไร
+2. **Technology Architecture**: ใช้ตอบว่า ระบบใช้ ROS 2, AI, sensor และ hardware อะไร
+3. **Feedback Loop**: ใช้ตอบว่า sensor feedback กลับไปปรับคำสั่งมอเตอร์อย่างไร
+
+ไม่ควรใส่ชื่อ library ทุกตัวลงใน Flowchart หลัก เพราะจะทำให้ผู้อ่านมองไม่เห็นลำดับการทำงาน
+ให้ใส่ชื่อเทคโนโลยีไว้ใน Technology Architecture และตารางด้านบนแทน
