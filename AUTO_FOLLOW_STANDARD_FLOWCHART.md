@@ -108,6 +108,66 @@ FOLLOW ME เป็น **vision-based person following with LiDAR safety** โ�
 ตรวจจับ/ยืนยัน owner, ใช้ LiDAR ประเมินระยะและตรวจสิ่งกีดขวาง แล้วปรับ PWM แบบต่อเนื่อง
 เพื่อรักษาทิศทางและระยะห่างจาก owner
 
+## 4. Flow การประมวลผลภายใน AUTO
+
+แผนผังนี้เน้นการคำนวณภายใน `lawnmower_node` หลังจากระบบได้รับคำสั่งเริ่ม AUTO แล้ว
+
+```mermaid
+flowchart TD
+    S([เริ่มรอบควบคุม AUTO]) --> I[/รับข้อมูล sensor และคำสั่ง/]
+    I --> I1[อ่าน waypoint เป้าหมาย]
+    I1 --> I2[อ่าน GPS ตำแหน่งปัจจุบัน]
+    I2 --> I3[อ่าน IMU yaw และ yaw rate]
+    I3 --> I4[อ่าน encoder และความเร็วล้อ]
+    I4 --> I5[อ่าน LiDAR scan]
+    I5 --> C{ระบบพร้อมและอยู่โหมด AUTO หรือไม่}
+    C -->|ไม่พร้อม| STOP[กำหนด PWM ซ้าย = 0<br/>PWM ขวา = 0]
+    STOP --> END1([รอรอบควบคุมถัดไป])
+    C -->|พร้อม| D[คำนวณระยะถึง waypoint]
+    D --> R{ถึง waypoint แล้วหรือยัง}
+    R -->|ถึงแล้ว| NEXT[เปลี่ยนไป waypoint ถัดไป]
+    NEXT --> FIN{มี waypoint เหลือหรือไม่}
+    FIN -->|ไม่มี| DONE[จบภารกิจและหยุดรถ]
+    DONE --> END2([สิ้นสุด AUTO])
+    FIN -->|มี| D
+    R -->|ยังไม่ถึง| H[คำนวณ target heading]
+    H --> E[คำนวณ heading error]
+    E --> X[คำนวณ cross-track error]
+    X --> L{LiDAR พบสิ่งกีดขวางหรือไม่}
+    L -->|พบ| SAFE[หยุด/ชะลอ/หลบตาม safety logic]
+    SAFE --> END1
+    L -->|ไม่พบ| PID[ประมวลผล PID และกฎการเลี้ยว]
+    PID --> V[คำนวณความเร็วพื้นฐานและ steering correction]
+    V --> PWM[สร้าง PWM ล้อซ้ายและล้อขวา]
+    PWM --> LIMIT[จำกัดค่า PWM และ slew rate]
+    LIMIT --> OUT[/ส่ง PWM ผ่าน Serial ไป Arduino/]
+    OUT --> FB[รถเคลื่อนที่และเกิด feedback]
+    FB --> END1
+```
+
+### ข้อมูลที่ใช้ในการคำนวณ AUTO
+
+| ขั้นตอน | ข้อมูลเข้า | ผลลัพธ์ |
+|---|---|---|
+| ระบุตำแหน่ง | GPS ปัจจุบัน + waypoint | ระยะและทิศทางไปเป้าหมาย |
+| ระบุทิศทาง | target heading + IMU yaw | heading error |
+| รักษาแนวเส้นทาง | ตำแหน่ง GPS + path | cross-track error |
+| ตรวจการเคลื่อนที่ | encoder ซ้าย/ขวา | ความเร็วและระยะที่เคลื่อนที่จริง |
+| ตรวจความปลอดภัย | LiDAR `/scan` | หยุด, ชะลอ หรืออนุญาตให้เคลื่อนที่ |
+| สร้างคำสั่ง | error ต่าง ๆ + PID | PWM ล้อซ้าย/ขวา |
+
+### สมการเชิงแนวคิดสำหรับรายงาน
+
+```text
+heading_error = target_heading - current_yaw
+steering_correction = PID(heading_error, cross_track_error)
+PWM_left  = base_speed + steering_correction
+PWM_right = base_speed - steering_correction
+```
+
+ค่าจริงจะถูก normalize, จำกัดช่วง PWM และปรับ ramp ก่อนส่งไป Arduino เพื่อป้องกัน
+การเปลี่ยนคำสั่งที่รุนแรงเกินไป
+
 ## 4. Feedback Loop ของระบบ
 
 ```mermaid
