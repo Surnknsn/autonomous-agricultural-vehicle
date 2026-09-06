@@ -1,0 +1,499 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="amr">
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="0.513473157443824 -1.04411480017909 0.490973712698276"
+        rpy="0 0 0" />
+      <mass
+        value="111.33143539967" />
+      <inertia
+        ixx="11.7257420736596"
+        ixy="-0.224302682720393"
+        ixz="-0.0163386635858304"
+        iyy="10.3161728169077"
+        iyz="-1.34014463461158"
+        izz="13.627596749161" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://amr_description/meshes/base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.529411764705882 0.549019607843137 0.549019607843137 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://amr_description/meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="front_left_Link">
+    <inertial>
+      <origin
+        xyz="6.29806547958189E-06 1.26989900310348E-05 0.0469790175218138"
+        rpy="0 0 0" />
+      <mass
+        value="9.10596909419496" />
+      <inertia
+        ixx="0.102808798739543"
+        ixy="2.61439637008449E-06"
+        ixz="-1.30238873157848E-08"
+        iyy="0.102808580725155"
+        iyz="-8.5780649850196E-06"
+        izz="0.194512956774539" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://amr_description/meshes/front_left_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://amr_description/meshes/front_left_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="front_left_joint"
+    type="fixed">
+    <origin
+      xyz="0.98744 -1.2545 0.38116"
+      rpy="1.5708 0 -1.5708" />
+    <parent
+      link="base_link" />
+    <child
+      link="front_left_Link" />
+    <axis
+      xyz="0 0 1" />
+  </joint>
+  <link
+    name="front_right_Link">
+    <inertial>
+      <origin
+        xyz="-6.29802913132416E-06 6.93427947001668E-06 -0.0469768887419214"
+        rpy="0 0 0" />
+      <mass
+        value="9.10537880454277" />
+      <inertia
+        ixx="0.102802010228658"
+        ixy="-2.61434784238459E-06"
+        ixz="-1.30469702876296E-08"
+        iyy="0.102801791115996"
+        iyz="6.74603344145962E-06"
+        izz="0.194500699265567" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://amr_description/meshes/front_right_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://amr_description/meshes/front_right_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="front_right_joint"
+    type="fixed">
+    <origin
+      xyz="0.067589 -1.2545 0.38116"
+      rpy="1.5708 0 -1.5708" />
+    <parent
+      link="base_link" />
+    <child
+      link="front_right_Link" />
+    <axis
+      xyz="0 0 1" />
+  </joint>
+  <link
+    name="rear_left_Link">
+    <inertial>
+      <origin
+        xyz="6.29807708352192E-06 7.05238520765095E-06 0.0469768502239475"
+        rpy="0 0 0" />
+      <mass
+        value="9.10536681371703" />
+      <inertia
+        ixx="0.102801871949084"
+        ixy="2.61439037980873E-06"
+        ixz="-1.30282666621313E-08"
+        iyy="0.102801652864166"
+        iyz="-6.77898283723768E-06"
+        izz="0.194500449518344" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://amr_description/meshes/rear_left_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://amr_description/meshes/rear_left_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="rear_left_joint"
+    type="fixed">
+    <origin
+      xyz="0.98744 -0.60082 0.38116"
+      rpy="1.5708 0 -1.5708" />
+    <parent
+      link="base_link" />
+    <child
+      link="rear_left_Link" />
+    <axis
+      xyz="0 0 1" />
+  </joint>
+  <link
+    name="rear_right_Link">
+    <inertial>
+      <origin
+        xyz="-6.29806920571241E-06 1.39867302306751E-06 -0.0469789196417592"
+        rpy="0 0 0" />
+      <mass
+        value="9.1059467489595" />
+      <inertia
+        ixx="0.102808491643662"
+        ixy="-2.61438938555222E-06"
+        ixz="-1.30309350238823E-08"
+        iyy="0.102808272080315"
+        iyz="5.00753476938784E-06"
+        izz="0.194512390944319" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://amr_description/meshes/rear_right_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://amr_description/meshes/rear_right_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="rear_right_joint"
+    type="fixed">
+    <origin
+      xyz="0.067589 -0.60083 0.38116"
+      rpy="1.5708 0 -1.5708" />
+    <parent
+      link="base_link" />
+    <child
+      link="rear_right_Link" />
+    <axis
+      xyz="0 0 1" />
+  </joint>
+  <link
+    name="lidar_link">
+    <inertial>
+      <origin
+        xyz="-0.000656328222520264 -4.6297980470511E-06 -0.0228383623751203"
+        rpy="0 0 0" />
+      <mass
+        value="0.102513122832863" />
+      <inertia
+        ixx="3.50509902213571E-05"
+        ixy="-8.61543944177731E-11"
+        ixz="-1.05221565532659E-07"
+        iyy="3.53118131962971E-05"
+        iyz="1.32882888057512E-11"
+        izz="4.34973420605747E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://amr_description/meshes/lidar_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://amr_description/meshes/lidar_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="lidar_joint"
+    type="fixed">
+    <origin
+      xyz="0.52997 -1.1875 1.2241"
+      rpy="0 0 -1.5708" />
+    <parent
+      link="base_link" />
+    <child
+      link="lidar_link" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="laser">
+  </link>
+  <joint
+    name="laser_alias_joint"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 3.141592653589793" />
+    <parent
+      link="lidar_link" />
+    <child
+      link="laser" />
+  </joint>
+  <link
+    name="laser_frame">
+  </link>
+  <joint
+    name="laser_frame_alias_joint"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 3.141592653589793" />
+    <parent
+      link="lidar_link" />
+    <child
+      link="laser_frame" />
+  </joint>
+  <link
+    name="gps_link">
+    <inertial>
+      <origin
+        xyz="-1.58862080601452E-05 -2.11689653317748E-06 -0.00729694980107243"
+        rpy="0 0 0" />
+      <mass
+        value="0.0353021449300339" />
+      <inertia
+        ixx="5.69787206623412E-06"
+        ixy="1.39262208226644E-09"
+        ixz="-2.03249690362271E-09"
+        iyy="5.68760659367031E-06"
+        iyz="-2.71015461822677E-10"
+        izz="1.07308389376905E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://amr_description/meshes/gps_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.250980392156863 0.250980392156863 0.250980392156863 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://amr_description/meshes/gps_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="gps_joint"
+    type="fixed">
+    <origin
+      xyz="0.52996 -1.1189 1.3402"
+      rpy="0 0 -1.5708" />
+    <parent
+      link="base_link" />
+    <child
+      link="gps_link" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="camera_link">
+    <inertial>
+      <origin
+        xyz="-0.0233429526839379 0.019429053006551 0.000207992680228752"
+        rpy="0 0 0" />
+      <mass
+        value="0.048344183886946" />
+      <inertia
+        ixx="1.23874865633182E-05"
+        ixy="1.18459466749714E-09"
+        ixz="6.8909221473793E-08"
+        iyy="5.89637575596035E-06"
+        iyz="-3.74296872552155E-10"
+        izz="1.50481974329103E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://amr_description/meshes/camera_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://amr_description/meshes/camera_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="camera_joint"
+    type="fixed">
+    <origin
+      xyz="0.51056 -1.3068 1.176"
+      rpy="0 0 -1.5708" />
+    <parent
+      link="base_link" />
+    <child
+      link="camera_link" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="pixhawk_link">
+    <inertial>
+      <origin
+        xyz="-0.0267134417849426 -0.000184817678566818 -0.00696316174768508"
+        rpy="0 0 0" />
+      <mass
+        value="0.0212907760631397" />
+      <inertia
+        ixx="3.6596486967437E-06"
+        ixy="-2.24028748716441E-08"
+        ixz="-1.34252827190325E-07"
+        iyy="1.22882118690945E-05"
+        iyz="-3.90713304776418E-09"
+        izz="1.58628366099003E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://amr_description/meshes/pixhawk_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 0.807843137254902 0.501960784313725 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://amr_description/meshes/pixhawk_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="pixhawk_joint"
+    type="fixed">
+    <origin
+      xyz="0.529962450603421 -1.21252590097309 1.2501594723365"
+      rpy="0 0 -1.5707963267949" />
+    <parent
+      link="base_link" />
+    <child
+      link="pixhawk_link" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+</robot>

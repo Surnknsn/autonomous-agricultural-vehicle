@@ -1,0 +1,25 @@
+flowchart LR
+    User[ผู้ใช้] --> Browser[Web Browser]
+    Browser -->|HTTP| Flask[app_web.py]
+    Browser -->|WebSocket / rosbridge| ROS[ROS2 Topics]
+
+    Flask -->|video_frame.jpg| Follow[follow_tracker_node.py]
+    Flask -->|owner dataset API| Browser
+    Dataset[web/dataset] --> Flask
+    Dataset --> Follow
+
+    Pixhawk[Pixhawk<br/>GPS + IMU/Yaw] -->|MAVLink| Main[lawnmower_node.py]
+    Arduino[Arduino Mega<br/>Mode + Encoder + Motor] <-->|Serial| Main
+    RPLidar[RPLIDAR] -->|/scan| Main
+    RPLidar -->|/scan| Follow
+    RPLidar -->|/scan| LidarProc[lidar_proc.py]
+
+    LidarProc -->|/lidar_warning diagnostic| ROS
+    Follow -->|/follow_cmd| ROS
+    ROS --> Main
+    Main -->|PWM Serial| Arduino
+    Arduino --> Motors[Motor Driver + Wheels]
+
+    Main -->|/current_gps + robot status| ROS
+    Follow -->|/follow_vision_status + /follow_debug| ROS
+    ROS --> Browser

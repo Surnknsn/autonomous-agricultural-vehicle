@@ -1,0 +1,13 @@
+flowchart TD
+    A[Manual joystick จากเว็บ] -->|/manual_cmd| B[lawnmower_node.py]
+    B --> C[auto-latch EMG mode]
+    C --> D[ส่ง EMG แล้วส่ง PWM passthrough]
+    D --> E[Motor Driver]
+
+    F[Emergency Stop จากเว็บ] -->|/emergency_stop = EMERGENCY| B
+    B --> G[ส่ง EMG ไป Arduino และ latch emergency]
+    G --> E
+
+    K[Emergency Reset จากเว็บ] -->|/emergency_stop = RESET| B
+    B --> L[ปลด latch และส่ง RST]
+    L --> E

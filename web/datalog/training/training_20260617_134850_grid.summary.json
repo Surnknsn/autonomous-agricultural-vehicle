@@ -1,0 +1,57 @@
+{
+  "training_id": "training_20260617_134850_grid",
+  "run_mode": "TRAINING",
+  "label": "Zigzag no path",
+  "ref_mode": "GRID",
+  "ref_path_len": 8,
+  "ref_path": [
+    {
+      "lat": 13.341735759339002,
+      "lng": 101.02139411505081
+    },
+    {
+      "lat": 13.341707576615875,
+      "lng": 101.0213193392149
+    },
+    {
+      "lat": 13.341717770987458,
+      "lng": 101.02131566543203
+    },
+    {
+      "lat": 13.341745327672074,
+      "lng": 101.02138878023068
+    },
+    {
+      "lat": 13.341754896005146,
+      "lng": 101.02138344541055
+    },
+    {
+      "lat": 13.341727965359043,
+      "lng": 101.02131199164916
+    },
+    {
+      "lat": 13.341738159730626,
+      "lng": 101.02130831786629
+    },
+    {
+      "lat": 13.341764464338217,
+      "lng": 101.02137811059043
+    }
+  ],
+  "start_time": "2026-06-17T13:48:50",
+  "end_time": "2026-06-17T13:57:54",
+  "status": "STOP",
+  "duration_s": 543.9130282402039,
+  "samples": 2289,
+  "manual_samples": 2279,
+  "distance_m": 485.381,
+  "cross_track_abs_avg_m": 6.768,
+  "cross_track_abs_peak_m": 30.545752029446938,
+  "heading_abs_avg_deg": 77.68,
+  "heading_abs_peak_deg": 179.86705865833085,
+  "current_abs_avg_a": 38.039,
+  "current_abs_peak_a": 125.5,
+  "battery_start_pct": 98,
+  "battery_end_pct": 93,
+  "voltage_min_v": 2.0
+}

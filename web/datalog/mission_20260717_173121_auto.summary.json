@@ -1,0 +1,32 @@
+{
+  "mission_id": "mission_20260717_173121_auto",
+  "run_mode": "AUTO",
+  "start_time": "2026-07-17T17:31:21",
+  "end_time": "2026-07-17T17:31:30",
+  "status": "COMPLETE",
+  "start_lat": 13.329315185546875,
+  "start_lng": 100.9978256225586,
+  "end_lat": 13.32931900024414,
+  "end_lng": 100.9978256225586,
+  "duration_s": 9.171481132507324,
+  "distance_m": 2.187,
+  "path_len": 23,
+  "last_wp_idx": 1,
+  "waypoints_reached": [
+    {
+      "wp_index": 0,
+      "time": "2026-07-17T17:31:30.168",
+      "lat": 13.32931900024414,
+      "lng": 100.9978256225586
+    }
+  ],
+  "battery_start_pct": 81,
+  "battery_end_pct": 81,
+  "battery_drop_pct": 0.0,
+  "voltage_min_v": 25.5,
+  "voltage_avg_v": 25.73,
+  "current_avg_a": -39.82,
+  "current_abs_avg_a": 39.82,
+  "current_abs_peak_a": 64.5,
+  "samples": 10
+}

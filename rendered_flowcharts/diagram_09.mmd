@@ -1,0 +1,23 @@
+sequenceDiagram
+    participant Main as lawnmower_node.py
+    participant Serial as USB Serial 115200
+    participant Arduino as ArduinoAMR.cpp
+    participant Motor as Motor Driver
+    participant Web as Web UI
+
+    Arduino->>Main: mode,encL,encR,pump,blade,manual_led,auto_lamp,emg,can_soc,can_voltage,can_current,can_temp,can_status
+    Main->>Web: publish /current_gps + /robot/status/* + /robot/battery/*
+
+    Main->>Serial: L,R
+    Serial->>Arduino: AUTO/FOLLOW PWM command
+    Arduino->>Motor: driveJetsonPwm(L,R)
+
+    Web->>Main: /manual_cmd
+    Main->>Serial: EMG
+    Main->>Serial: PWM,L,R
+    Serial->>Arduino: emergency manual passthrough
+    Arduino->>Motor: driveJetsonPwm(L,R)
+
+    Web->>Main: /emergency_stop = RESET
+    Main->>Serial: RST
+    Serial->>Arduino: clear software emergency

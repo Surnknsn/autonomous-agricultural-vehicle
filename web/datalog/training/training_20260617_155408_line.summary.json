@@ -1,0 +1,43 @@
+{
+  "training_id": "training_20260617_155408_line",
+  "run_mode": "TRAINING",
+  "label": "slip_turn",
+  "ref_mode": "LINE",
+  "ref_path_len": 3,
+  "ref_path": [
+    {
+      "lat": 13.34170871917641,
+      "lng": 101.02128434926273
+    },
+    {
+      "lat": 13.341724051864167,
+      "lng": 101.0212702676654
+    },
+    {
+      "lat": 13.341750476281215,
+      "lng": 101.02133966982365
+    }
+  ],
+  "start_time": "2026-06-17T15:54:08",
+  "end_time": "2026-06-17T15:55:30",
+  "status": "STOP",
+  "duration_s": 82.26945734024048,
+  "samples": 349,
+  "manual_samples": 349,
+  "distance_m": 8.162,
+  "cross_track_abs_avg_m": 0.543,
+  "cross_track_abs_peak_m": 1.6088980406141147,
+  "heading_abs_avg_deg": 109.94,
+  "heading_abs_peak_deg": 179.9320971342015,
+  "current_abs_avg_a": 53.713,
+  "current_abs_peak_a": 133.8000030517578,
+  "battery_start_pct": 79,
+  "battery_end_pct": 78,
+  "voltage_min_v": 24.799999237060547,
+  "quality_good": 288,
+  "quality_usable": 15,
+  "quality_bad": 46,
+  "gps_jump_rows": 18,
+  "speed_invalid_rows": 6,
+  "battery_invalid_rows": 45
+}

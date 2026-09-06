@@ -1,0 +1,11 @@
+flowchart LR
+    Jetson[Jetson / ROS2] <-->|MAVLink| Pixhawk[Pixhawk<br/>GPS + IMU/Yaw]
+    Jetson <-->|USB Serial| Arduino[Arduino Mega]
+    Jetson <-->|USB Serial /dev/ttyUSB0| RPLidar[RPLIDAR]
+    Jetson <-->|USB/IP Camera| Camera[Camera]
+    Arduino --> MotorDriver[Motor Driver]
+    MotorDriver --> LeftMotor[Left Motor]
+    MotorDriver --> RightMotor[Right Motor]
+    Arduino --> Encoders[Wheel Encoders]
+    Arduino --> Switches[Mode Switch / EMG / Pump / Blade]
+    Arduino <-->|CAN / MCP2515| BMS[Battery BMS]

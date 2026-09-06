@@ -1,0 +1,6 @@
+{
+  "executablePath": "/usr/bin/firefox",
+  "product": "firefox",
+  "userDataDir": "/tmp/mermaid-firefox-profile",
+  "args": ["--headless", "--new-instance", "--profile", "/tmp/mermaid-firefox-profile"]
+}

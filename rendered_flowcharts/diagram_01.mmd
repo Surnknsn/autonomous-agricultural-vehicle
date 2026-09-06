@@ -1,0 +1,16 @@
+flowchart TD
+    A[เปิด Jetson] --> B[เข้าสู่ Desktop Session]
+    B --> C[GNOME Autostart]
+    C --> D[/home/iai/.config/autostart/auto_start_mower.sh.desktop]
+    D --> E[/home/iai/auto_start_mower.sh]
+    E --> F[sleep 10]
+    F --> G[source /opt/ros/foxy/setup.bash]
+    G --> H[source ~/ros2_foxy_ws/install/setup.bash]
+
+    H --> I[Terminal 1<br/>rosbridge_websocket]
+    H --> J[Terminal 2<br/>lawnmower_node]
+    H --> K[Terminal 3<br/>follow_tracker_node]
+    H --> L[Terminal 4<br/>rplidar_node]
+    H --> M[Terminal 5<br/>lidar_proc.py]
+    H --> N[Terminal 6<br/>app_web.py]
+    H --> O[Terminal 7<br/>cloudflared tunnel]

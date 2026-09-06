@@ -1,0 +1,50 @@
+{
+  "mission_id": "mission_demo_grid_20260531_141947",
+  "run_mode": "AUTO",
+  "start_time": "2026-05-31T14:19:47",
+  "end_time": "2026-05-31T14:20:02",
+  "status": "STOP",
+  "start_lat": 13.7564212,
+  "start_lng": 100.5011428,
+  "end_lat": 13.7564212,
+  "end_lng": 100.5011991,
+  "duration_s": 15.0,
+  "distance_m": 25.8,
+  "path_len": 8,
+  "last_wp_idx": 4,
+  "waypoints_reached": [
+    {
+      "wp_index": 0,
+      "time": "2026-05-31T14:19:51.000",
+      "lat": 13.7564472,
+      "lng": 100.5011435
+    },
+    {
+      "wp_index": 1,
+      "time": "2026-05-31T14:19:56.000",
+      "lat": 13.7564478,
+      "lng": 100.5011714
+    },
+    {
+      "wp_index": 2,
+      "time": "2026-05-31T14:19:59.000",
+      "lat": 13.7564219,
+      "lng": 100.5011718
+    },
+    {
+      "wp_index": 3,
+      "time": "2026-05-31T14:20:01.000",
+      "lat": 13.7564212,
+      "lng": 100.5011991
+    }
+  ],
+  "battery_start_pct": 92,
+  "battery_end_pct": 90,
+  "battery_drop_pct": 2.0,
+  "voltage_min_v": 26.0,
+  "voltage_avg_v": 26.275,
+  "current_avg_a": -12.9,
+  "current_abs_avg_a": 12.9,
+  "current_abs_peak_a": 20.6,
+  "samples": 16
+}

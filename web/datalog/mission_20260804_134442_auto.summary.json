@@ -1,0 +1,38 @@
+{
+  "mission_id": "mission_20260804_134442_auto",
+  "run_mode": "AUTO",
+  "start_time": "2026-08-04T13:44:42",
+  "end_time": "2026-08-04T13:45:14",
+  "status": "STOP",
+  "start_lat": 13.329399108886719,
+  "start_lng": 100.99790954589844,
+  "end_lat": 13.329407691955566,
+  "end_lng": 100.99784851074219,
+  "duration_s": 32.10310220718384,
+  "distance_m": 9.79,
+  "path_len": 16,
+  "last_wp_idx": 2,
+  "waypoints_reached": [
+    {
+      "wp_index": 0,
+      "time": "2026-08-04T13:44:56.986",
+      "lat": 13.329413414001465,
+      "lng": 100.99786376953125
+    },
+    {
+      "wp_index": 1,
+      "time": "2026-08-04T13:45:04.003",
+      "lat": 13.3294095993042,
+      "lng": 100.99784851074219
+    }
+  ],
+  "battery_start_pct": 99,
+  "battery_end_pct": 99,
+  "battery_drop_pct": 0.0,
+  "voltage_min_v": 26.200000762939453,
+  "voltage_avg_v": 26.2,
+  "current_avg_a": -1.2,
+  "current_abs_avg_a": 1.2,
+  "current_abs_peak_a": 1.2000000476837158,
+  "samples": 32
+}

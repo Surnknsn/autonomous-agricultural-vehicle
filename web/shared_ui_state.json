@@ -1,0 +1,1 @@
+{"follow_target": "Black", "safety_enabled": true, "gps_start_only": false, "auto_speed_pct": 30, "safety_cm": 150, "lidar_range_m": 24.5, "camera_preview": true, "camera_stabilize": false, "follow_gui": true, "waypoint_coord_labels": false, "guided_capture_active": false, "guided_capture_owner": "", "guided_capture_index": 0, "updated_at": 1786940638.7495725}

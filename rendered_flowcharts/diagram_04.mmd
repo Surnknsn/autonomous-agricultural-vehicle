@@ -1,0 +1,18 @@
+flowchart TD
+    Browser[Web Browser] -->|HTTP GET /| Flask[app_web.py<br/>Flask Backend]
+    Flask -->|render_template| Index[templates/index.html]
+
+    Browser -->|fetch API| API[Flask REST API]
+    API --> Profiles[web/dataset/]
+    API --> UIState[shared_ui_state.json]
+    API --> MapState[shared_map_state.json]
+
+    Browser -->|MJPEG /video_feed| CameraStream[Camera Stream]
+    Browser -->|JPEG /video_frame.jpg| CameraFrame[Camera Snapshot]
+    CameraStream --> Flask
+    CameraFrame --> Flask
+
+    Browser -->|roslibjs WebSocket| ROSBridge[rosbridge_websocket<br/>port 9090 หรือ tunnel]
+    ROSBridge --> ROSTopics[ROS2 Topics]
+
+    Flask -->|optional /ros proxy| ROSBridge

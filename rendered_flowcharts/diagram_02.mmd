@@ -1,0 +1,26 @@
+flowchart TD
+    WS[/home/iai/ros2_foxy_ws] --> Startup[/home/iai/auto_start_mower.sh]
+    WS --> SRC[src/]
+    WS --> WEB[web/]
+    WS --> LIDAR[lidar_proc.py]
+    WS --> INSTALL[install/]
+
+    SRC --> LC[lawnmower_control]
+    LC --> Main[lawnmower_node.py]
+    LC --> Follow[follow_tracker_node.py]
+    LC --> LCSetup[setup.py]
+
+    SRC --> RPLIDAR[rplidar_ros]
+    SRC --> ODOM[odom_yaw]
+    SRC --> MAVROS[my_mavros_launch]
+    SRC --> PX4Bridge[px4_mavros_bridge]
+
+    WEB --> App[app_web.py]
+    WEB --> Index[templates/index.html]
+    WEB --> EStick[static/js/emer_stick.js]
+    WEB --> Dataset[dataset/]
+    WEB --> UIState[shared_ui_state.json]
+    WEB --> MapState[shared_map_state.json]
+
+    Arduino[/home/iai/Documents/PlatformIO/Projects/AMR] --> ArduinoCode[src/ArduinoAMR.cpp]
+    Arduino --> PIO[platformio.ini]

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#020408">
+  <title>Auto Lawn Mower Offline</title>
+  <style>
+    :root {
+      --neon: #00f2ff;
+      --warning: #ffea00;
+      --bg: #020408;
+      --panel: rgba(10, 18, 26, 0.88);
+      --text: #effcff;
+      --soft: #a9cbd3;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      background:
+        radial-gradient(circle at 30% 10%, rgba(0, 242, 255, 0.16), transparent 34%),
+        linear-gradient(180deg, #020408 0%, #061016 100%);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+    body {
+      display: grid;
+      place-items: center;
+      padding: 22px;
+    }
+    .panel {
+      width: min(520px, 100%);
+      border: 1px solid rgba(0, 242, 255, 0.35);
+      background: var(--panel);
+      box-shadow: 0 0 28px rgba(0, 242, 255, 0.18);
+      border-radius: 14px;
+      padding: 26px;
+    }
+    .kicker {
+      color: var(--warning);
+      font-size: 13px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(28px, 7vw, 42px);
+      letter-spacing: 0.08em;
+    }
+    p {
+      margin: 0 0 16px;
+      color: var(--soft);
+      font-size: 16px;
+      line-height: 1.55;
+    }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--neon);
+      margin-top: 18px;
+      font-weight: 700;
+    }
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--warning);
+      box-shadow: 0 0 18px rgba(255, 234, 0, 0.75);
+    }
+    button {
+      width: 100%;
+      margin-top: 22px;
+      border: 1px solid var(--neon);
+      background: rgba(0, 242, 255, 0.08);
+      color: var(--text);
+      padding: 14px 16px;
+      border-radius: 9px;
+      font-size: 15px;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <main class="panel">
+    <div class="kicker">Offline Mode</div>
+    <h1>SERVER OFFLINE</h1>
+    <p>เครื่องหลักหรือเว็บเซิร์ฟเวอร์ยังไม่พร้อม หน้า control จะกลับมาเองเมื่อเปิดเครื่องและเชื่อมต่อได้อีกครั้ง</p>
+    <p>ข้อมูลสด เช่น GPS, battery, camera, LiDAR และปุ่มสั่งรถจะไม่อัปเดตระหว่าง offline เพื่อความปลอดภัย</p>
+    <div class="status"><span class="dot"></span><span>รอเชื่อมต่อกับ Auto Lawn Mower</span></div>
+    <button type="button" onclick="location.reload()">ลองเชื่อมต่อใหม่</button>
+  </main>
+  <script>
+    window.addEventListener('online', function () {
+      setTimeout(function () { location.reload(); }, 400);
+    });
+  </script>
+</body>
+</html>

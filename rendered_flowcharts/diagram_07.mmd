@@ -1,0 +1,37 @@
+flowchart TD
+    A[ผู้ใช้เลือก Owner บนเว็บ] --> B[index.html]
+    B -->|/follow_target_profile| C[follow_tracker_node.py]
+    C --> D[โหลดรูปจาก web/dataset/owner]
+
+    E[ผู้ใช้กด START FOLLOW] -->|/auto_control| C
+    E -->|/auto_control| M[lawnmower_node.py]
+
+    Camera[Camera Snapshot จาก app_web.py] --> C
+    LiDAR[LiDAR /scan] --> C
+
+    C --> F[ตรวจจับคนในภาพ]
+    F --> G{พบคนไหม}
+    G -->|ไม่พบ| H[STOP / SEARCH / รอ target]
+    G -->|พบ| I[เทียบกับ owner dataset]
+
+    I --> J{ใช่ owner ไหม}
+    J -->|ไม่ใช่ owner| H
+    J -->|ใช่ owner| K[หา center x ของกรอบคน]
+
+    K --> L[แบ่งภาพเป็น steering zones]
+    LiDAR --> N[หาระยะและก้อน LiDAR ด้านหน้า]
+    Camera --> O[ประเมินระยะจากขนาดกรอบ]
+    N --> P[Fusion ระยะจากกล้อง + LiDAR]
+    O --> P
+
+    L --> Q[คำนวณเลี้ยวซ้าย/ขวาแบบ arc]
+    P --> R[คำนวณความเร็วตามระยะ]
+    Q --> S[รวมเป็น PWM,L,R]
+    R --> S
+
+    S -->|/follow_cmd| M
+    M -->|Serial PWM| Arduino[Arduino Mega]
+    Arduino --> Motor[Motor Driver + Wheels]
+
+    C -->|/follow_vision_status| B
+    C -->|/follow_debug| B

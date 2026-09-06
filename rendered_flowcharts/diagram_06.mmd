@@ -1,0 +1,33 @@
+flowchart TD
+    A[ผู้ใช้วาด Line Path หรือ Grid บนเว็บ] --> B[index.html แปลงเป็น waypoint]
+    B -->|publish /waypoint| C[lawnmower_node.py]
+    D[ผู้ใช้กด START AUTO] -->|/auto_control| C
+
+    C --> E[อ่าน GPS + Yaw จาก Pixhawk]
+    C --> F[อ่าน Encoder + Mode Switch จาก Arduino]
+    C --> G[อ่าน LiDAR /scan]
+
+    E --> H[เลือก waypoint ปัจจุบัน]
+    F --> H
+    H --> I[คำนวณ heading ไปตาม segment]
+    I --> J[ใช้ IMU yaw คุมทิศให้รถตรง]
+    J --> K[ใช้ encoder/DR ช่วยยืนยัน progress]
+    K --> L[ใช้ GPS เป็นตำแหน่งคร่าวๆและตรวจใกล้ waypoint]
+
+    L --> M{ถึง waypoint แล้วหรือยัง}
+    M -->|ยังไม่ถึง| N[คำนวณ PWM ซ้าย/ขวา]
+    M -->|ถึงแล้ว| O[เลื่อนไป waypoint ถัดไป]
+    O --> H
+
+    G --> P{มีสิ่งกีดขวางใกล้ไหม}
+    P -->|ใช่ แต่ยังมีช่องผ่าน| Q[เลือกช่องว่าง/แทรก bypass waypoint/เลี้ยวอ้อม]
+    P -->|ช่องแคบเกิน| R[หยุดรอเพื่อความปลอดภัย]
+    P -->|ใกล้มากและมีทิศหลบ| U[pivot หันหนีสิ่งกีดขวาง]
+    P -->|ไม่ใช่| N
+
+    Q --> N
+    R --> S[ส่ง serial PWM ไป Arduino]
+    U --> S
+    N --> S
+    S --> T[Motor Driver ขับล้อ]
+    T --> E

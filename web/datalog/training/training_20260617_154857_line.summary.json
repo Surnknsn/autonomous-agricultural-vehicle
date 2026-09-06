@@ -1,0 +1,43 @@
+{
+  "training_id": "training_20260617_154857_line",
+  "run_mode": "TRAINING",
+  "label": "gps_bad_follow",
+  "ref_mode": "LINE",
+  "ref_path_len": 3,
+  "ref_path": [
+    {
+      "lat": 13.34170871917641,
+      "lng": 101.02128434926273
+    },
+    {
+      "lat": 13.341724051864167,
+      "lng": 101.0212702676654
+    },
+    {
+      "lat": 13.341750476281215,
+      "lng": 101.02133966982365
+    }
+  ],
+  "start_time": "2026-06-17T15:48:57",
+  "end_time": "2026-06-17T15:50:25",
+  "status": "STOP",
+  "duration_s": 88.68128705024719,
+  "samples": 371,
+  "manual_samples": 371,
+  "distance_m": 9.434,
+  "cross_track_abs_avg_m": 0.421,
+  "cross_track_abs_peak_m": 1.0879110356904824,
+  "heading_abs_avg_deg": 77.8,
+  "heading_abs_peak_deg": 179.62721798021965,
+  "current_abs_avg_a": 28.797,
+  "current_abs_peak_a": 113.80000305175781,
+  "battery_start_pct": 81,
+  "battery_end_pct": 80,
+  "voltage_min_v": 24.899999618530273,
+  "quality_good": 276,
+  "quality_usable": 17,
+  "quality_bad": 78,
+  "gps_jump_rows": 23,
+  "speed_invalid_rows": 12,
+  "battery_invalid_rows": 73
+}

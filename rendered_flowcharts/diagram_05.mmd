@@ -1,0 +1,21 @@
+flowchart TD
+    A[LiDAR /scan] --> B[lawnmower_node.py lidar_cb]
+    B --> C[กรองเฉพาะ front sector]
+    C --> D[รวม beam เป็น obstacle cluster]
+    D --> E{cluster ใหญ่พอและอยู่ใน avoid distance?}
+    E -->|ไม่ใช่| F[วิ่งตาม waypoint ปกติ]
+    E -->|ใช่| G[คำนวณ left/right threat]
+    G --> H[แบ่ง front sector เป็น corridor หลายช่อง]
+    H --> I{มีช่องกว้างพอให้รถผ่านไหม}
+    I -->|มี| J[เลือก corridor ที่โล่งที่สุด]
+    J --> K[สร้าง steering bias ไปทางช่องว่าง]
+    K --> L[เลี้ยวแบบ arc: ล้อด้านนอกเร็ว ด้านในช้า]
+    L --> M{เปิด AUTO_BYPASS_ENABLE ไหม}
+    M -->|เปิด| N[แทรก bypass waypoint ชั่วคราว]
+    N --> O[ออกข้างเพื่อผ่านสิ่งกีดขวาง]
+    O --> P[กลับเข้า waypoint/path เดิม]
+    M -->|ปิด| O
+    I -->|ไม่มี| Q[หยุดรอช่องปลอดภัย]
+    D --> R{สิ่งกีดขวางเข้า hard pivot zone ไหม}
+    R -->|ใช่ และมี bias ซ้าย/ขวา| S[pivot หันหนีสิ่งกีดขวาง]
+    R -->|ใช่ แต่ไม่มี bias ชัด| Q
