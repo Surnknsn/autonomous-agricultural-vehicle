@@ -256,3 +256,99 @@ flowchart LR
 
 ไม่ควรใส่ชื่อ library ทุกตัวลงใน Flowchart หลัก เพราะจะทำให้ผู้อ่านมองไม่เห็นลำดับการทำงาน
 ให้ใส่ชื่อเทคโนโลยีไว้ใน Technology Architecture และตารางด้านบนแทน
+
+## 9. Flow การควบคุม Manual จากรีโมท RC
+
+ส่วนนี้อ้างอิงจากไฟล์ Arduino:
+`C:\Users\Lenovo\Documents\Arduino\selectmode_Final-Emer\selectmode_Final-Emer.ino`
+
+Manual เป็นการควบคุมแบบ **direct radio control** โดย Arduino อ่านสัญญาณ iBus จากรีโมท
+แล้วแปลงค่าช่องสัญญาณเป็นทิศทางและ PWM ของล้อโดยตรง ไม่ผ่าน GPS, waypoint, PID หรือ AI
+
+```mermaid
+flowchart TD
+    S([เริ่มระบบ Arduino]) --> SETUP[ตั้งค่า pin, iBus, encoder, servo และ CAN]
+    SETUP --> STOP0[สั่งหยุดมอเตอร์เริ่มต้น]
+    STOP0 --> LOOP([เริ่มรอบ loop])
+    LOOP --> IBUS[อัปเดตข้อมูลรีโมทด้วย ibus.loop]
+    IBUS --> MODE[อ่านสวิตช์โหมด D1/D2]
+    MODE --> DEB{โหมดนิ่งเกินเวลา debounce หรือไม่}
+    DEB -->|ไม่| KEEP[ใช้โหมดเดิมเพื่อป้องกันสัญญาณรบกวน]
+    KEEP --> EMG
+    DEB -->|ใช่| EMG{มี Web Emergency override หรือไม่}
+    EMG -->|มี| WEBSTOP[ใช้คำสั่ง Web emergency เป็นลำดับความสำคัญสูงสุด]
+    WEBSTOP --> MOTOR
+    EMG -->|ไม่มี| MAN{โหมดปัจจุบันเป็น MANUAL หรือไม่}
+    MAN -->|ไม่ใช่| OTHER[AUTO/FOLLOW รับ PWM จาก Jetson]
+    OTHER --> MOTOR
+    MAN -->|ใช่| READ[/อ่าน CH1 ถึง CH6 จากรีโมท/]
+    READ --> VALID{CH1 และ CH2 ใช้งานได้หรือไม่}
+    VALID -->|ไม่| SAFE[หยุดมอเตอร์และหยุดใบมีด]
+    SAFE --> AUX
+    VALID -->|ใช่| DB[ตั้ง deadband รอบค่ากลาง 1500]
+    DB --> MIX[แปลง CH1/CH2 เป็น PWM ล้อซ้าย/ขวา]
+    MIX --> MOTOR[ส่งทิศทางและ PWM ไป driver มอเตอร์]
+    MOTOR --> AUX[ประมวลผลอุปกรณ์เสริม]
+    AUX --> SERVO[CH3/CH4 -> filter -> servo 1/2]
+    SERVO --> PUMP[CH6 -> debounce -> ปั๊มน้ำ]
+    PUMP --> BLADE[CH5 -> debounce -> รีเลย์ใบมีด UP/DOWN/STOP]
+    BLADE --> ENC[อ่าน encoder และคำนวณความเร็วล้อ]
+    ENC --> STATUS[/ส่งสถานะ Serial ทุก 100 ms/]
+    STATUS --> LOOP
+```
+
+### โครงสร้างสัญญาณจากรีโมท
+
+| ช่องรีโมท | หน้าที่ | การประมวลผล |
+|---|---|---|
+| CH1 | แกนขับล้อขวา/คำสั่งด้านหนึ่ง | จำกัดช่วง `1000-2000` และ map เป็น PWM |
+| CH2 | แกนขับล้อซ้าย/คำสั่งอีกด้าน | จำกัดช่วง `1000-2000` และ map เป็น PWM |
+| CH3 | Servo 1 | filter, deadband, จำกัดมุม `60-180` องศา และจำกัด step |
+| CH4 | Servo 2 | filter, deadband, จำกัดมุม `30-150` องศา และจำกัด step |
+| CH5 | ใบมีด | เลือก `UP`, `DN` หรือ `STP` และ debounce `120 ms` |
+| CH6 | ปั๊มน้ำ | เปิด/ปิดด้วย threshold และ debounce `120 ms` |
+
+### การคำนวณมอเตอร์ Manual
+
+โค้ดใช้การควบคุมแบบ **differential drive** โดยแยก PWM ของล้อซ้ายและขวา:
+
+```text
+pwmL = map(CH2, 1000..2000, 255..-255)
+pwmR = map(CH1, 1000..2000, -255..255)
+```
+
+ก่อนขับจริงจะทำงานดังนี้:
+
+1. ถ้าค่า CH1 หรือ CH2 ใกล้ค่ากลาง `1500` ภายใน deadband `35` ให้ถือว่าเป็นศูนย์
+2. แยกเครื่องหมายของ PWM เป็นทิศทาง `-1`, `0`, `+1`
+3. ใช้ค่าสัมบูรณ์เป็นความเร็ว PWM ช่วง `0-255`
+4. เรียก `driveHardware()` เพื่อกำหนดขา IN/ PWM ของ motor driver
+5. ถ้าทิศทางเป็นศูนย์ จะใช้ active brake และ PWM เป็นศูนย์
+
+ดังนั้น Manual ไม่ได้คำนวณเส้นทางหรือแก้ heading แต่รับตำแหน่งคันบังคับจากผู้ควบคุม
+แล้วแปลงเป็นความเร็วล้อทันที
+
+### เงื่อนไขความปลอดภัยของ Manual
+
+- ถ้า CH1 หรือ CH2 ต่ำกว่า `500` ซึ่งหมายถึงสัญญาณรีโมทผิดปกติ ระบบสั่งหยุดมอเตอร์
+- การเปลี่ยนโหมดผ่าน D1/D2 ต้องนิ่งอย่างน้อย `80 ms` ก่อนยอมรับโหมดใหม่
+- เมื่อเปลี่ยนโหมด ระบบจะสั่งหยุดมอเตอร์ก่อน เว้นแต่กำลังอยู่ใน Web Emergency override
+- `EMG` จาก Jetson มี priority สูงกว่า Manual ปกติและ latch สถานะ emergency
+- เมื่อไม่มีคำสั่ง Web emergency ใหม่และไม่ได้เปิด RC fallback ระบบจะหยุดรถ
+
+### Feedback ของ Arduino ฝั่ง Manual
+
+Encoder ล้อซ้าย/ขวาถูกอ่านผ่าน interrupt แล้วคำนวณเป็นความเร็วทุก `200 ms`
+จากนั้นส่ง status CSV กลับไปยัง Jetson ทุก `100 ms` ประกอบด้วย mode, encoder,
+สถานะปั๊ม/ใบมีด/emergency, battery CAN, ความเร็ว และ PWM ปัจจุบัน
+
+## 10. สรุปประเภทการควบคุม Manual
+
+Manual จากรีโมทจัดเป็น **Human-in-the-loop direct control** หรือ
+**open-loop command mapping ที่มี safety feedback**:
+
+- ผู้ควบคุมเป็นผู้กำหนดทิศทางและความเร็วผ่านรีโมท
+- Arduino แปลงคำสั่งเป็น PWM โดยตรง
+- ไม่มีการวางแผนเส้นทางหรือ PID เพื่อรักษา waypoint
+- มี feedback สำหรับรายงาน encoder/ความเร็วและมี safety เช่น signal validation,
+  deadband, debounce, active brake และ emergency override
