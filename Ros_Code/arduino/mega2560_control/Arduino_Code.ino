@@ -15,7 +15,7 @@
 // SMILE Driver Pins (Mode 1-2)
 #define L_PWM 11
 #define L_INA 36
-#define L_INB 35
+#define L_INB 25
 #define R_PWM 10
 #define R_INA 41 
 #define R_INB 40 
@@ -86,6 +86,16 @@ const int SERVO_FILTER_NUM = 5;   // filtered = (prev*5 + raw)/6
 const int SERVO_FILTER_DEN = 6;
 const int SERVO_MAX_STEP = 2;     // smaller = smoother
 const int SERVO1_MIN_ANGLE = 60;
+const float WHEEL_DIAMETER_M = 0.4064;       // 16 inch wheel
+const float WHEEL_CIRCUMFERENCE_M = 1.276;   // PI * wheel diameter
+const float COUNTS_PER_WHEEL_REV = 1220.0;   // measured counts per wheel revolution
+const long SPEED_ENCODER_DEADBAND_COUNTS = 20;
+const unsigned long SPEED_UPDATE_INTERVAL_MS = 200;
+// Keep false with the current ROS parser. Set true after ROS accepts 16 CSV fields.
+const bool SEND_SPEED_IN_STATUS_CSV = true;
+// Flip these to -1 if forward motion reports a negative speed on that side.
+const int ENC_SPEED_SIGN_L = 1;
+const int ENC_SPEED_SIGN_R = 1;
 const int SERVO1_MAX_ANGLE = 180;
 const int SERVO2_MIN_ANGLE = 30;
 const int SERVO2_MAX_ANGLE = 150;
@@ -107,14 +117,20 @@ int drive_cmd_confirm_count[3] = {0, 0, 0};  // index 1..2
 int ch3_filtered = SERVO_CENTER;
 int ch4_filtered = SERVO_CENTER;
 const bool ENABLE_CAN_DEBUG = true;
-int can_soc = 0;
-int can_soh = 0;
-float can_voltage = 0;
-float can_current = 0;
-float can_temperature = 0;
-float can_charge_limit = 0;
-float can_discharge_limit = 0;
+int can_soc = -1;
+int can_soh = -1;
+float can_voltage = NAN;
+float can_current = NAN;
+float can_temperature = NAN;
+float can_charge_limit = NAN;
+float can_discharge_limit = NAN;
 String can_status_text = "UNKNOWN";
+float speedLeftMps = 0.0;
+float speedRightMps = 0.0;
+float speedAvgMps = 0.0;
+long lastSpeedEncL = 0;
+long lastSpeedEncR = 0;
+unsigned long lastSpeedCalcTime = 0;
 
 /* ===== MODE ===== */
 enum Mode { MODE_MANUAL = 0, MODE_AUTO = 1, MODE_FOLLOW = 2 };
@@ -124,6 +140,7 @@ const unsigned long MODE_DEBOUNCE_MS = 80;
 /* ================= FORWARD DECLARATIONS ================= */
 void stopMotors();
 void sendStatusSerial();
+void updateWheelSpeed();
 void handleAuto();
 void handleManual();
 Mode readMode();
@@ -145,6 +162,14 @@ String decodeCanStatus(const unsigned char *buf);
 unsigned long lastLogTime = 0;
 unsigned long lastStatusSend = 0;
 unsigned long lastRxRawLogTime = 0;
+unsigned long lastCanRawLogTime = 0;
+unsigned long lastCanNoFrameLogTime = 0;
+unsigned long lastCanConfigSwitchTime = 0;
+bool canReady = false;
+bool canConfigLocked = false;
+int canConfigIndex = 0;
+const char *canConfigName = "NONE";
+unsigned long lastCanFrameTime = 0;
 
 /* ================= ENCODER ISR ================= */
 void isrLA() { if (digitalRead(ENC_L_B)) encL--; else encL++; }
@@ -179,6 +204,11 @@ void setup() {
   pinMode(ENC_R_A, INPUT_PULLUP); pinMode(ENC_R_B, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(ENC_L_A), isrLA, RISING);
   attachInterrupt(digitalPinToInterrupt(ENC_R_A), isrRA, RISING);
+  noInterrupts();
+  lastSpeedEncL = encL;
+  lastSpeedEncR = encR;
+  interrupts();
+  lastSpeedCalcTime = millis();
 
   stopMotors();
   Serial.print("# SYSTEM READY v12.5 (EMER-WEB+RC) ");
@@ -220,14 +250,16 @@ void loop() {
     handleAuto();
   }
 
+  updateWheelSpeed();
+
   /* ===== SEND STATUS TO JETSON (10Hz - เสถียรกว่า 20Hz) ===== */
   if (millis() - lastStatusSend >= 100) {
     lastStatusSend = millis();
     sendStatusSerial();
   }
 
-  /* ===== DEBUG LOG (Every 250ms) ===== */
-  if (ENABLE_DEBUG_LOG && millis() - lastLogTime > 250) {
+  /* ===== DEBUG LOG (Every 500ms) ===== */
+  if (ENABLE_DEBUG_LOG && millis() - lastLogTime >= SPEED_UPDATE_INTERVAL_MS) {
     lastLogTime = millis();
     Serial.print("# LOG ["); Serial.print(getModeName(currentMode)); Serial.print("]");
     Serial.print(" EMG:"); Serial.print(emergencyActive ? 1 : 0);
@@ -236,15 +268,45 @@ void loop() {
     Serial.print(" PWM:"); Serial.print(current_pwmL); Serial.print(","); Serial.print(current_pwmR);
     Serial.print(" PINL:"); Serial.print(dbg_l_ina); Serial.print(","); Serial.print(dbg_l_inb);
     Serial.print(" PINR:"); Serial.print(dbg_r_ina); Serial.print(","); Serial.print(dbg_r_inb);
-    Serial.print(" ENC:"); Serial.print(encL); Serial.print(","); Serial.println(encR);
+    Serial.print(" ENC:"); Serial.print(encL); Serial.print(","); Serial.print(encR);
+    Serial.print(" SPD_L:"); Serial.print(speedLeftMps, 3);
+    Serial.print(" SPD_R:"); Serial.print(speedRightMps, 3);
+    Serial.print(" SPD_AVG:"); Serial.println(speedAvgMps, 3);
   }
 }
 
 /* ================= FUNCTIONS ================= */
 
+void updateWheelSpeed() {
+  unsigned long now = millis();
+  if (now - lastSpeedCalcTime < SPEED_UPDATE_INTERVAL_MS) return;
+
+  long currentEncL, currentEncR;
+  noInterrupts();
+  currentEncL = encL;
+  currentEncR = encR;
+  interrupts();
+
+  unsigned long dtMs = now - lastSpeedCalcTime;
+  long deltaL = currentEncL - lastSpeedEncL;
+  long deltaR = currentEncR - lastSpeedEncR;
+  lastSpeedEncL = currentEncL;
+  lastSpeedEncR = currentEncR;
+  lastSpeedCalcTime = now;
+
+  if (abs(deltaL) < SPEED_ENCODER_DEADBAND_COUNTS) deltaL = 0;
+  if (abs(deltaR) < SPEED_ENCODER_DEADBAND_COUNTS) deltaR = 0;
+
+  float dtSec = dtMs / 1000.0;
+  speedLeftMps = ENC_SPEED_SIGN_L * ((float)deltaL / COUNTS_PER_WHEEL_REV) * WHEEL_CIRCUMFERENCE_M / dtSec;
+  speedRightMps = ENC_SPEED_SIGN_R * ((float)deltaR / COUNTS_PER_WHEEL_REV) * WHEEL_CIRCUMFERENCE_M / dtSec;
+  speedAvgMps = (speedLeftMps + speedRightMps) * 0.5;
+}
+
 void sendStatusSerial() {
-  // ส่งข้อมูลสถานะ:
-  // mode,encL,encR,pump,blade,manual_led,auto_lamp,emg,can_soc,can_voltage,can_current,can_temp,can_status
+  // Status CSV for ROS/web (18 fields, 10Hz):
+  // mode,encL,encR,pump,blade,manual_led,auto_lamp,emg,can_soc,can_voltage,can_current,can_temp,can_status,
+  // speed_l_mps,speed_r_mps,speed_avg_mps,pwm_l,pwm_r
   // blade: 0=STOP, 1=UP, 2=DOWN
   // can_status: 0=NORMAL, 1=WARNING/PROTECTION, 2=UNKNOWN
   int bladeCode = 0;
@@ -279,7 +341,18 @@ void sendStatusSerial() {
   Serial.print(",");
   Serial.print(can_temperature, 1);
   Serial.print(",");
-  Serial.println(canStatusCode);
+  Serial.print(canStatusCode);
+  Serial.print(",");
+  Serial.print(speedLeftMps, 3);
+  Serial.print(",");
+  Serial.print(speedRightMps, 3);
+  Serial.print(",");
+  Serial.print(speedAvgMps, 3);
+  Serial.print(",");
+  Serial.print(current_pwmL);
+  Serial.print(",");
+  Serial.print(current_pwmR);
+  Serial.println();
 
   // Human-readable debug line (Arduino side)
   if (ENABLE_DEBUG_LOG) {
@@ -295,7 +368,13 @@ void sendStatusSerial() {
     Serial.print(" can_v="); Serial.print(can_voltage, 2);
     Serial.print(" can_i="); Serial.print(can_current, 2);
     Serial.print(" can_t="); Serial.print(can_temperature, 1);
-    Serial.print(" can_st="); Serial.println(canStatusCode);
+    Serial.print(" can_st="); Serial.print(canStatusCode);
+    Serial.print(" can_ready="); Serial.print(canReady ? 1 : 0);
+    Serial.print(" can_lock="); Serial.print(canConfigLocked ? 1 : 0);
+    Serial.print(" can_age_ms="); Serial.print(lastCanFrameTime == 0 ? -1 : (long)(millis() - lastCanFrameTime));
+    Serial.print(" spd_l="); Serial.print(speedLeftMps, 3);
+    Serial.print(" spd_r="); Serial.print(speedRightMps, 3);
+    Serial.print(" spd_avg="); Serial.println(speedAvgMps, 3);
   }
 }
 
@@ -693,24 +772,82 @@ void initCanDebug() {
   if (!ENABLE_CAN_DEBUG) return;
 
   SPI.begin();
-  pinMode(CAN_INT, INPUT);
+  pinMode(CAN_CS, OUTPUT);
+  digitalWrite(CAN_CS, HIGH);
+  pinMode(CAN_INT, INPUT_PULLUP);
+  delay(20);
 
-  if (CAN.begin(MCP_ANY, CAN_500KBPS, MCP_8MHZ) == CAN_OK) {
-    CAN.setMode(MCP_NORMAL);
-    Serial.println("# CAN INIT OK");
-  } else {
-    Serial.println("# CAN INIT FAIL");
+  canConfigName = "500K_8MHz";
+  canReady = false;
+  for (byte attempt = 1; attempt <= 3; attempt++) {
+    if (CAN.begin(MCP_ANY, CAN_500KBPS, MCP_8MHZ) == CAN_OK) {
+      canReady = true;
+      break;
+    }
+    Serial.print("# CAN INIT RETRY ");
+    Serial.print(attempt);
+    Serial.print(" cfg=");
+    Serial.println(canConfigName);
+    delay(100);
   }
+
+  if (canReady) {
+    CAN.setMode(MCP_NORMAL);
+    Serial.print("# CAN INIT OK cfg=");
+    Serial.println(canConfigName);
+  } else {
+    Serial.print("# CAN INIT FAIL cfg=");
+    Serial.println(canConfigName);
+  }
+  lastCanConfigSwitchTime = millis();
 }
 
 void pollCanDebug() {
   if (!ENABLE_CAN_DEBUG) return;
-  if (digitalRead(CAN_INT) != LOW) return;
+
+  unsigned long now = millis();
+  if (!canReady || (CAN.checkReceive() != CAN_MSGAVAIL)) {
+    if (now - lastCanNoFrameLogTime >= 1000) {
+      lastCanNoFrameLogTime = now;
+      Serial.print("# CAN NO FRAME cfg=");
+      Serial.print(canConfigName);
+      Serial.print(" ready=");
+      Serial.print(canReady ? 1 : 0);
+      Serial.print(" locked=");
+      Serial.print(canConfigLocked ? 1 : 0);
+      Serial.print(" age_ms=");
+      Serial.println(lastCanFrameTime == 0 ? -1 : (long)(now - lastCanFrameTime));
+    }
+
+    return;
+  }
+
+  lastCanFrameTime = now;
+  if (!canConfigLocked) {
+    canConfigLocked = true;
+    Serial.print("# CAN LOCK cfg=");
+    Serial.println(canConfigName);
+  }
 
   unsigned long rxId = 0;
   unsigned char len = 0;
   unsigned char buf[8] = {0};
   CAN.readMsgBuf(&rxId, &len, buf);
+
+  if (millis() - lastCanRawLogTime >= 500) {
+    lastCanRawLogTime = millis();
+    Serial.print("# CANRAW id=0x");
+    Serial.print(rxId, HEX);
+    Serial.print(" len=");
+    Serial.print(len);
+    Serial.print(" data=");
+    for (byte i = 0; i < len; i++) {
+      if (buf[i] < 16) Serial.print("0");
+      Serial.print(buf[i], HEX);
+      if (i + 1 < len) Serial.print(" ");
+    }
+    Serial.println();
+  }
 
   if (rxId == 0x355 && len >= 4) {
     can_soc = (int)(buf[0] | (buf[1] << 8));
