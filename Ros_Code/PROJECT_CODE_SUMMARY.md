@@ -447,3 +447,192 @@ YOLO -> MediaPipe ในโหมด auto/fallback
 - **Jetson** รันระบบประมวลผลทั้งหมด
 - **Arduino Mega 2560** รับคำสั่งระดับ PWM และควบคุม hardware จริง
 - **Flask + rosbridge + web UI** เป็นช่องทางควบคุมและดูสถานะจากผู้ใช้
+
+## 11. ตารางสรุปทุก ROS package และไฟล์หลัก
+
+| Package/ไฟล์ | ภาษา/ชนิด | ใช้ทำอะไร | สถานะในระบบ |
+|---|---|---|---|
+| `src/lawnmower_control` | Python ROS 2 | ชุดควบคุมรถ, serial, AUTO/FOLLOW และ camera tracking | ส่วนหลัก |
+| `lawnmower_node.py` | Python ROS 2 node | คุยกับ Arduino, อ่านสถานะ, ส่ง PWM และจัดการคำสั่งรถ | ส่วนหลัก |
+| `follow_tracker_node.py` | Python ROS 2 node | YOLO, ByteTrack, OSNet, LiDAR fusion และ FOLLOW control | ส่วนหลักของ FOLLOW |
+| `camera_lane_assist_node.py` | Python ROS 2 node | ประมวลผลภาพ/ช่วยงาน lane assist | ส่วนช่วยของ AUTO |
+| `src/rplidar_ros` | C++ ROS 2 driver | คุยกับ RPLIDAR และ publish `LaserScan` | sensor หลักเมื่อเปิด LiDAR |
+| `src/amr_description` | URDF/Xacro/CMake | โมเดลตัวรถ, frame, mesh และ RViz visualization | visualization |
+| `src/odom_yaw` | Python ROS 2 | ประมวลผล odometry/yaw | ใช้เมื่อ launch เรียก |
+| `src/my_mavros_launch` | Python launch | launch ชุด MAVROS/PX4 | integration/launch เสริม |
+| `src/px4_mavros_bridge` | C++/Python launch/bridge | bridge ระหว่าง PX4/MAVROS กับระบบรถ | code เสริม/ต้องตรวจ startup |
+| `arduino/mega2560_control` | Arduino C++ | ควบคุม hardware ระดับมอเตอร์และอุปกรณ์จริง | controller ฝั่ง hardware |
+| `web_app/app_web.py` | Flask Python | HTTP API, camera endpoint, dataset และ web control | web backend |
+| `web/templates/index.html` | HTML/JavaScript | หน้า dashboard, map, camera และ controls | web frontend |
+| `web/static/` | JavaScript/CSS/assets | icon, PWA, offline page และ client logic | web frontend |
+| `web/datalog/` | CSV/JSONL | เก็บ mission/status/training log | data/runtime |
+| `models/reid/` | ONNX | เก็บโมเดล OSNet ReID | model asset |
+
+### 11.1 ROS message และข้อมูลที่เกี่ยวข้อง
+
+| Message/API | ใช้ทำอะไร |
+|---|---|
+| `std_msgs/String` | สถานะ, command, text state และข้อมูลที่ serialize เป็น string |
+| `std_msgs/Bool` | flag เช่น enable/disable หรือสถานะเปิดปิด |
+| `geometry_msgs` | vector, pose, twist หรือข้อมูลเรขาคณิตของรถ/ทิศทาง |
+| `sensor_msgs/LaserScan` | ระยะ LiDAR รอบรถและ obstacle safety |
+| `nav_msgs/Odometry` | ตำแหน่ง/ความเร็ว/heading จาก odometry |
+| ROS parameters/environment | ปรับ model path, threshold, camera, ReID และ safety โดยไม่แก้ source |
+
+## 12. ตาราง Python library แบบละเอียด
+
+| Library/import | ส่วนที่ใช้ | หน้าที่ในโปรเจกต์ |
+|---|---|---|
+| `rclpy` | ROS Python nodes | สร้าง node, publisher, subscriber, timer, parameter และ logger |
+| `std_msgs`, `geometry_msgs`, `sensor_msgs`, `nav_msgs` | ROS messages | รูปแบบข้อมูลที่ node รับส่งกัน |
+| `tf2_ros` | ROS transform | แปลงความสัมพันธ์ระหว่าง frame ของ robot/sensor |
+| `cv2` | camera/follow/web | อ่านภาพ, resize, BGR/RGB conversion, crop, HSV และ image measurement |
+| `numpy` | ทุกงาน vision/ReID | array, vector, normalization, dot product, distance และ numerical calculation |
+| `ultralytics` | `follow_tracker_node.py` | โหลด `yolo11n.pt`, detect person และเรียก tracker |
+| `onnxruntime` | OSNet ReID | เปิด session และรัน `osnet_x0_25_msmt17_b1.onnx` |
+| `torch` | ReID fallback | tensor, inference mode, device CPU/CUDA และ model execution |
+| `torchvision` | ReID fallback | โหลด `MobileNet_V3_Small_Weights.DEFAULT` และ preprocessing |
+| `PIL.Image` | ReID fallback | แปลงภาพ OpenCV เป็นรูปแบบที่ torchvision ใช้ |
+| `mediapipe` | detector/pose fallback | ตรวจ pose/person เมื่อเลือกโหมด fallback หรือ auto fallback |
+| `requests` | camera/web integration | เรียก snapshot, HTTP endpoint และ API ภายในระบบ |
+| `serial` (`pyserial`) | `lawnmower_node.py` | เปิด serial port ไป Arduino และส่ง/รับ command/status |
+| `pymavlink.mavutil` | `lawnmower_node.py`/PX4 code | สร้าง connection และสื่อสาร protocol MAVLink |
+| `Flask` | `web_app/app_web.py` | web server, route, response, template และ JSON API |
+| `flask_sock.Sock` | web backend | เปิด WebSocket ฝั่ง Flask สำหรับการเชื่อมต่อแบบ realtime |
+| `websocket` | web/rosbridge | เชื่อม WebSocket ไป rosbridge หรือ service ที่เกี่ยวข้อง |
+| `werkzeug.secure_filename` | web upload | ทำชื่อไฟล์ upload ให้ปลอดภัยก่อนบันทึก |
+| `json` | ROS/web/datalog | serialize และ parse state/config/profile/command |
+| `threading` | web/backend | ทำงานรับส่งหรือ stream บางส่วนแยกจาก request หลัก |
+| `pathlib.Path` | ทุก package | จัดการ path ของ model, dataset, profile และไฟล์ config |
+| `glob` | camera/serial discovery | ค้นหา device หรือไฟล์ตาม pattern |
+| `math`, `statistics`, `re`, `time` | control/vision | มุม, filter, parsing, timing และสถิติของระบบควบคุม |
+
+ไม่มี version ของ Python library เหล่านี้ถูก pin ไว้ใน `package.xml` หรือไฟล์ requirements ที่อยู่ใน source ชุดนี้ ดังนั้นรุ่นที่ใช้จริงต้องตรวจจาก environment ของ Jetson เช่น `pip freeze` เพิ่มเติม
+
+## 13. Arduino: ตารางทุก library, pin และฟังก์ชัน
+
+### 13.1 Library Arduino
+
+| Include | ใช้กับส่วนไหน | หน้าที่ |
+|---|---|---|
+| `Arduino.h` | core | `setup`, `loop`, GPIO, PWM, timing, string และ utility พื้นฐาน |
+| `IBusBM.h` | RC receiver | อ่านค่า iBus channel 1-6 จากรีโมต |
+| `Servo.h` | servo 1/2 | สร้าง pulse และสั่งมุม servo |
+| `SPI.h` | MCP CAN | เปิด SPI bus ระหว่าง Mega กับ CAN module |
+| `mcp_can.h` | battery CAN | อ่าน frame จาก BMS และตั้ง CAN bitrate |
+
+### 13.2 Pin map ทุกจุด
+
+| Macro | Pin | อุปกรณ์/สัญญาณ | หน้าที่ในโค้ด |
+|---|---:|---|---|
+| `EMER_CHECK_PIN` | 41 | emergency input สำรอง | ใช้เมื่อ `USE_EMER_CHECK_PIN=1`; ปัจจุบันปิดไว้ |
+| `D1_PIN` | 48 | mode switch D1 | เลือก AUTO/FOLLOW/MANUAL ร่วมกับ D2 |
+| `D2_PIN` | 49 | mode switch D2 | เลือก mode ร่วมกับ D1 |
+| `LAMP_AUTO_MODE` | 22 | ไฟแสดง AUTO/FOLLOW | HIGH เมื่อไม่ใช่ MANUAL |
+| `MANUAL_STATUS_PIN` | 26 | ไฟแสดง MANUAL | HIGH เมื่ออยู่ MANUAL |
+| `L_PWM` | 11 | motor driver ซ้าย PWM | ปรับกำลังมอเตอร์ซ้าย 0-255 |
+| `L_INA` | 36 | motor driver ซ้าย direction A | กำหนดทิศทาง |
+| `L_INB` | 35 | motor driver ซ้าย direction B | กำหนดทิศทาง |
+| `R_PWM` | 10 | motor driver ขวา PWM | ปรับกำลังมอเตอร์ขวา 0-255 |
+| `R_INA` | 41 | motor driver ขวา direction A | กำหนดทิศทาง |
+| `R_INB` | 40 | motor driver ขวา direction B | กำหนดทิศทาง |
+| `BLADE_RELAY_UP` | 5 | relay ใบมีด | สั่งทิศ UP |
+| `BLADE_RELAY_DN` | 6 | relay ใบมีด | สั่งทิศ DOWN |
+| `WATER_PUMP` | 4 | relay/driver ปั๊มน้ำ | เปิดปิดปั๊มน้ำ |
+| `SERVO1_PIN` | 12 | servo 1 | รับ CH3 และจำกัดมุม 60-180 |
+| `SERVO2_PIN` | 13 | servo 2 | รับ CH4 และจำกัดมุม 30-150 |
+| `ENC_L_A` | 18 | encoder ซ้าย phase A | interrupt นับ encoder |
+| `ENC_L_B` | 17 | encoder ซ้าย phase B | ระบุทิศการหมุน |
+| `ENC_R_A` | 20 | encoder ขวา phase A | interrupt นับ encoder |
+| `ENC_R_B` | 21 | encoder ขวา phase B | ระบุทิศการหมุน |
+| `CAN_CS` | 53 | MCP CAN chip select | เลือก CAN module ผ่าน SPI |
+| `CAN_INT` | 2 | MCP CAN interrupt | แจ้งว่ามี CAN frame ใหม่ |
+
+ข้อควรระวัง: `EMER_CHECK_PIN` และ `R_INA` ใช้หมายเลข pin `41` เหมือนกัน แต่ emergency input ถูกปิดด้วย `USE_EMER_CHECK_PIN 0` ขณะที่ `R_INA` ถูกใช้เป็น direction output จริง หากเปิด emergency input ต้องตรวจวงจรและแก้ pin conflict ก่อน
+
+### 13.3 ค่าควบคุมที่มีผลต่อพฤติกรรม
+
+| ค่าคงที่ | ค่า | ผล |
+|---|---:|---|
+| `MANUAL_CENTER` | 1500 | จุดกลาง channel RC |
+| `MANUAL_DEADBAND` | 35 | ช่วงนิ่งรอบจุดกลาง |
+| `DRIVE_CMD_CONFIRM_CYCLES` | 3 | ต้องเห็นคำสั่งขับต่อเนื่องก่อนเริ่มมอเตอร์ |
+| `SERVO_MAX_STEP` | 2 | จำกัดการเปลี่ยนมุม servo ต่อ loop ให้เคลื่อนนุ่ม |
+| `CH6_ON_THRESH/OFF_THRESH` | 1700/1300 | hysteresis ของปั๊มน้ำ |
+| `CH5_UP_ON_THRESH` | 1680 | ค่า CH5 สำหรับสถานะใบมีด DN ตาม mapping ใน source |
+| `CH5_DN_ON_THRESH` | 1320 | ค่า CH5 สำหรับสถานะใบมีด UP ตาม mapping ใน source |
+| `CH5_CENTER_LOW/HIGH` | 1420/1580 | ช่วงหยุดใบมีด |
+| `MODE_DEBOUNCE_MS` | 80 ms | debounce mode switch |
+| `CH6_DEBOUNCE_MS` | 120 ms | debounce ปั๊มน้ำ |
+| `CH5_DEBOUNCE_MS` | 120 ms | debounce ใบมีด |
+| `WEB_MANUAL_OVERRIDE_HOLD_MS` | 800 ms | อายุคำสั่ง web PWM แบบ emergency |
+| `WEB_EMER_ALLOW_RC_FALLBACK` | 0 | ไม่มี RC fallback ขณะ web emergency |
+| `JETSON_INVERT_L/R` | 0/0 | ไม่กลับทิศเฉพาะคำสั่ง Jetson |
+| `HW_INVERT_L/R` | 0/0 | ไม่กลับทิศระดับ hardware |
+
+## 14. Protocol ระหว่าง Jetson กับ Arduino แบบละเอียด
+
+### 14.1 คำสั่งจาก Jetson ไป Arduino
+
+| รูปแบบ | เงื่อนไข | ผลลัพธ์ |
+|---|---|---|
+| `PWM,left,right` | AUTO/FOLLOW หรือ web direct path | จำกัดค่าที่ -255..255 แล้วขับมอเตอร์ซ้าย/ขวา |
+| `MANUAL,left,right` | web emergency | เปิด software emergency และขับตาม PWM ที่กำหนด |
+| `EMG` | ทุก mode | latch emergency, clear command และหยุดมอเตอร์ |
+| `RST` | ทุก mode | ยกเลิก software emergency และหยุดก่อนรับคำสั่งใหม่ |
+
+ทุก command จบด้วย newline และ Arduino อ่านด้วย `pollJetsonSerial()` ที่ `115200 baud`
+
+### 14.2 สถานะจาก Arduino ไป Jetson
+
+บรรทัดข้อมูลหลักมี field ตามลำดับ:
+
+```text
+mode,encL,encR,pump,blade,manual_led,auto_lamp,emg,can_soc,can_voltage,can_current,can_temp,can_status
+```
+
+ความหมาย:
+
+- `mode`: 0 MANUAL, 1 AUTO, 2 FOLLOW
+- `encL`, `encR`: encoder ซ้าย/ขวา
+- `pump`: 0/1
+- `blade`: 0 STOP, 1 UP, 2 DOWN
+- `manual_led`, `auto_lamp`: สถานะไฟแสดง mode
+- `emg`: software emergency 0/1
+- `can_soc`, `can_voltage`, `can_current`, `can_temp`: ค่าจาก BMS
+- `can_status`: 0 NORMAL, 1 WARNING/PROTECTION, 2 UNKNOWN
+
+สถานะหลักถูกส่งทุก `100 ms` หรือประมาณ `10 Hz` และ debug log ถูกส่งทุกประมาณ `250 ms`
+
+## 15. รุ่น/ไฟล์ที่ยืนยันได้และสิ่งที่ยังไม่มี version
+
+| รายการ | สิ่งที่ยืนยันจาก source | สิ่งที่ยังต้องตรวจจากเครื่องจริง |
+|---|---|---|
+| ROS | Foxy ตามชื่อ workspace/เอกสาร | patch release ของ ROS 2 Foxy |
+| `rplidar_ros` | package version 2.1.4 | firmware ของ RPLIDAR |
+| YOLO | `yolo11n.pt` และ Ultralytics API | version ของ `ultralytics`, checksum/ไฟล์ weight จริง |
+| ByteTrack | `bytetrack.yaml` ผ่าน Ultralytics | config ที่ติดตั้งจริงและ version tracker API |
+| OSNet | `osnet_x0_25_msmt17_b1.onnx` | ONNX opset, checksum และ provider ที่เครื่องใช้จริง |
+| MobileNet | `MobileNet_V3_Small_Weights.DEFAULT` | version ของ torch/torchvision และ weight cache |
+| Arduino | Mega 2560, CAN 500 kbps, MCP 8 MHz | version Arduino core และ versions ของ IBusBM/Servo/MCP CAN |
+| Web | Flask, flask-sock, websocket และ roslibjs | package versions และ rosbridge version |
+
+## 16. สรุปบทบาทแบบหนึ่งบรรทัดต่อส่วน
+
+- `YOLO11n`: ตรวจจับ **ตำแหน่งคน**
+- `ByteTrack`: รักษา **track ต่อเนื่องของ detection ระหว่างเฟรม**
+- `OSNet`: ตรวจ **ความเหมือนของบุคคลกับ owner profile**
+- `MobileNetV3-Small`: ReID fallback เมื่อ OSNet ใช้ไม่ได้
+- `MediaPipe Pose`: detector/pose fallback เมื่อ YOLO ใช้ไม่ได้หรือเลือกโหมดนี้
+- `HSV/color`: fallback ระดับ appearance ที่เบาที่สุด
+- `OpenCV`: เปิดและแปลงภาพ รวมถึงวัด bounding box
+- `NumPy`: คำนวณ vector/score/ระยะ
+- `RPLIDAR`: วัด obstacle และระยะรอบรถ
+- `ROS 2 Foxy`: เชื่อมทุก node และ message
+- `Flask`: เปิด web API และ server
+- `rosbridge`: พา browser คุยกับ ROS
+- `Arduino Mega 2560`: ตัดสิน mode/emergency และขับ hardware จริง
+- `IBusBM`: รับคำสั่งรีโมต
+- `Servo`: ขับ servo
+- `MCP CAN`: อ่าน battery/BMS
+- `Serial`: ช่องทาง command/status ระหว่าง Jetson กับ Arduino
