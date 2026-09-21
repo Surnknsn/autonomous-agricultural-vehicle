@@ -229,9 +229,43 @@ flowchart TD
 5. **Real-time actuation separation**: แยก high-level decision บน ROS 2 ออกจาก real-time motor I/O บน Arduino
 6. **Safety-first command path**: ทุกคำสั่งต้องผ่าน mode, link, sensor และ obstacle checks ก่อนถึงมอเตอร์
 
-## Slide 10: One-slide Summary
+## Slide 10: AUTO ตัดหญ้า vs FOLLOW ME ในหน้าเดียว
 
-> ระบบนี้เป็น autonomous vehicle platform แบบ multi-modal ที่รวม direct RC control, waypoint navigation และ AI-based person following เข้าด้วยกัน โดยใช้ ROS 2 เป็น communication backbone, Python เป็น high-level controller, Arduino เป็น real-time actuator และใช้ GPS/IMU, encoder, LiDAR และกล้องเป็น feedback เพื่อสร้างระบบควบคุมแบบ closed-loop ที่มี safety supervision
+### Autonomous Agricultural Vehicle: Two Mission Modes
+
+|  | **AUTO: โหมดตัดหญ้า / วิ่งตามเส้นทาง** | **FOLLOW ME: โหมดติดตามผู้ควบคุม** |
+|---|---|---|
+| **เป้าหมาย** | เคลื่อนที่ตาม waypoint/แนวเส้นทางเพื่อปฏิบัติงานในพื้นที่ | รักษาตำแหน่งและระยะห่างจาก owner ที่เลือกไว้ |
+| **ข้อมูลนำเข้า** | GPS position, IMU yaw, encoder และ waypoint | Camera frame, owner profile, LiDAR และ odometry |
+| **การรับรู้สภาพแวดล้อม** | Localization และตรวจเส้นทาง/สิ่งกีดขวาง | ตรวจจับคนและยืนยันตัวตนของเป้าหมาย |
+| **เทคโนโลยีหลัก** | ROS 2 Foxy, GPS/IMU, PID, differential drive, RPLIDAR | OpenCV, YOLO11n, ByteTrack, OSNet ReID, RPLIDAR |
+| **เหตุผลที่ใช้** | GPS/IMU บอกตำแหน่งและ heading; encoder ใช้ feedback; PID ลด tracking error | YOLO หา “คนอยู่ที่ไหน”; ByteTrack รักษา track; OSNet ตรวจ “ใช่ owner หรือไม่” |
+| **ผลลัพธ์การคำนวณ** | heading error + cross-track error -> steering policy | owner bearing + target distance -> follow policy |
+| **คำสั่งขับเคลื่อน** | differential PWM ซ้าย/ขวา | differential PWM ซ้าย/ขวา |
+| **Safety gate** | GPS readiness, sensor validity, LiDAR obstacle stop และ timeout | owner confidence, target lost timeout, LiDAR obstacle stop และ emergency override |
+
+```mermaid
+flowchart LR
+    subgraph AUTO[โหมด AUTO: ตัดหญ้า]
+        A1[Waypoint + GPS/IMU] --> A2[Heading/Cross-track Error]
+        A2 --> A3[PID + Navigation Policy]
+    end
+    subgraph FOLLOW[โหมด FOLLOW ME]
+        F1[Camera Frame] --> F2[YOLO11n + ByteTrack]
+        F2 --> F3[OSNet ReID + LiDAR]
+        F3 --> F4[Bearing/Distance Error]
+    end
+    A3 --> S[Safety Supervisor]
+    F4 --> S
+    S --> P[Differential PWM]
+    P --> J[Jetson/ROS 2]
+    J --> AR[Arduino Real-time I/O]
+    AR --> M[Motor Driver + Wheels]
+```
+
+### Engineering takeaway
+
+> AUTO ใช้ **ตำแหน่งและทิศทางของรถ** เป็น reference ส่วน FOLLOW ME ใช้ **ตำแหน่งและ identity ของบุคคล** เป็น reference ทั้งสองโหมดใช้ closed-loop control, differential drive และ safety supervisor ชุดเดียวกัน ก่อนส่ง PWM ไปยัง Arduino เพื่อควบคุมมอเตอร์จริง
 
 ## คำแนะนำการนำเสนอ
 
