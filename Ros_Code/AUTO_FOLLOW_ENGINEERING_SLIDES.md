@@ -231,18 +231,45 @@ flowchart TD
 
 ## Slide 10: AUTO ตัดหญ้า vs FOLLOW ME ในหน้าเดียว
 
-### Autonomous Agricultural Vehicle: Two Mission Modes
+### Autonomous Agricultural Vehicle: Technology Used by Mission Mode
 
-|  | **AUTO: โหมดตัดหญ้า / วิ่งตามเส้นทาง** | **FOLLOW ME: โหมดติดตามผู้ควบคุม** |
-|---|---|---|
-| **เป้าหมาย** | เคลื่อนที่ตาม waypoint/แนวเส้นทางเพื่อปฏิบัติงานในพื้นที่ | รักษาตำแหน่งและระยะห่างจาก owner ที่เลือกไว้ |
-| **ข้อมูลนำเข้า** | GPS position, IMU yaw, encoder และ waypoint | Camera frame, owner profile, LiDAR และ odometry |
-| **การรับรู้สภาพแวดล้อม** | Localization และตรวจเส้นทาง/สิ่งกีดขวาง | ตรวจจับคนและยืนยันตัวตนของเป้าหมาย |
-| **เทคโนโลยีหลัก** | ROS 2 Foxy, GPS/IMU, PID, differential drive, RPLIDAR | OpenCV, YOLO11n, ByteTrack, OSNet ReID, RPLIDAR |
-| **เหตุผลที่ใช้** | GPS/IMU บอกตำแหน่งและ heading; encoder ใช้ feedback; PID ลด tracking error | YOLO หา “คนอยู่ที่ไหน”; ByteTrack รักษา track; OSNet ตรวจ “ใช่ owner หรือไม่” |
-| **ผลลัพธ์การคำนวณ** | heading error + cross-track error -> steering policy | owner bearing + target distance -> follow policy |
-| **คำสั่งขับเคลื่อน** | differential PWM ซ้าย/ขวา | differential PWM ซ้าย/ขวา |
-| **Safety gate** | GPS readiness, sensor validity, LiDAR obstacle stop และ timeout | owner confidence, target lost timeout, LiDAR obstacle stop และ emergency override |
+#### AUTO: โหมดตัดหญ้า / วิ่งตามเส้นทาง
+
+| Technology Used | ใช้ทำอะไร |
+|---|---|
+| **ROS 2 Foxy** | เชื่อม node, sensor และ controller แบบ message-based |
+| **GPS + IMU** | ระบุตำแหน่งรถและ heading สำหรับ navigation |
+| **Waypoint / Path Planning** | กำหนดเส้นทางและจุดหมายของรถในพื้นที่ทำงาน |
+| **Encoder** | วัดการหมุนของล้อและใช้เป็น motion feedback |
+| **PID Controller** | ลด heading error และ cross-track error ให้รถรักษาแนวเส้นทาง |
+| **Differential Drive** | แปลง steering command เป็นความเร็วล้อซ้าย/ขวา |
+| **RPLIDAR / LaserScan** | ตรวจ obstacle และสั่งหยุดเมื่อเส้นทางไม่ปลอดภัย |
+
+**ผลลัพธ์:** `GPS/IMU + Encoder -> Error Calculation -> PID -> Differential PWM`
+
+#### FOLLOW ME: โหมดติดตามผู้ควบคุม
+
+| Technology Used | ใช้ทำอะไร |
+|---|---|
+| **Camera + OpenCV** | รับภาพ, resize, crop และวัดตำแหน่งเป้าหมายในภาพ |
+| **YOLO11n** | ตรวจจับตำแหน่งบุคคล โดยใช้ class `person` |
+| **ByteTrack** | รักษา track ของคนเดิมต่อเนื่องระหว่างหลายเฟรม |
+| **OSNet ReID** | สร้าง feature เพื่อยืนยันว่าเป็น owner ที่เลือกไว้ ไม่ใช่บุคคลอื่น |
+| **Color / Appearance Matching** | ช่วยแยก owner เมื่อ ReID score ใกล้เคียงกัน |
+| **RPLIDAR / LaserScan** | ประเมินระยะเป้าหมายและตรวจ obstacle รอบรถ |
+| **Follow Controller** | คำนวณ bearing error และ distance error เพื่อรักษาระยะติดตาม |
+
+**ผลลัพธ์:** `Camera -> Detect + Identify -> Bearing/Distance -> Follow Policy -> Differential PWM`
+
+#### Common Technology: ใช้ร่วมกันทุกโหมด
+
+| Technology Used | ใช้ทำอะไร |
+|---|---|
+| **Jetson** | ประมวลผล high-level control, perception และ decision making |
+| **Arduino Mega 2560** | Real-time I/O, emergency handling และควบคุมมอเตอร์/อุปกรณ์จริง |
+| **Serial 115200** | ส่ง command PWM และรับ status/encoder ระหว่าง Jetson กับ Arduino |
+| **Safety Supervisor** | ตรวจ mode, timeout, sensor validity, emergency และ obstacle ก่อนขับรถ |
+| **Motor Driver + Differential Wheels** | เปลี่ยน PWM เป็นการเคลื่อนที่ของรถ |
 
 ```mermaid
 flowchart LR
